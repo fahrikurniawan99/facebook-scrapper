@@ -246,6 +246,20 @@ def scrape_group(url: str, max_scrolls: int, base_delay: float = 2.5, headless: 
         print("Silakan jalankan 'python login.py' atau 'python import_cookie.py' terlebih dahulu.\n")
         sys.exit(1)
 
+    # Otomatis rapikan format state.json jika user mem-paste format array mentah
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                raw_state = json.load(f)
+            if isinstance(raw_state, list):
+                from import_cookie import create_state_from_json
+                formatted_state = create_state_from_json(raw_state)
+                with open(STATE_FILE, "w", encoding="utf-8") as f:
+                    json.dump(formatted_state, f, indent=2)
+                print("[Info] Format state.json otomatis disesuaikan ke standar Playwright.")
+        except Exception:
+            pass
+
     print("=" * 75)
     print("Memulai Facebook Group Scraper (1 Row Postingan + Lengkap SEMUA Komentar)")
     print(f"Target URL   : {url}")
@@ -279,6 +293,31 @@ def scrape_group(url: str, max_scrolls: int, base_delay: float = 2.5, headless: 
 
         current_url = page.url
         print(f"[Debug] URL yang terbuka: {current_url}")
+
+        # Otomatis tangani pop-up consent cookie jika muncul
+        if "consent" in current_url.lower():
+            print("[Info] Terdeteksi pop-up persetujuan cookie Facebook, menyetujui otomatis...")
+            selectors = [
+                'div[aria-label="Izinkan semua cookie"]',
+                'div[role="button"]:has-text("Izinkan semua cookie")',
+                'button:has-text("Izinkan semua cookie")',
+                'div[aria-label="Allow all cookies"]',
+                'button:has-text("Allow all cookies")',
+                'div[role="button"]:has-text("Tolak cookie opsional")',
+                'button:has-text("Tolak cookie opsional")'
+            ]
+            for sel in selectors:
+                try:
+                    el = page.locator(sel).first
+                    if el.is_visible(timeout=1500):
+                        el.click()
+                        page.wait_for_timeout(4000)
+                        context.storage_state(path=STATE_FILE)
+                        current_url = page.url
+                        print(f"[Debug] URL setelah persetujuan cookie: {current_url}")
+                        break
+                except Exception:
+                    continue
 
         if "login" in current_url.lower() or "checkpoint" in current_url.lower():
             os.makedirs("output", exist_ok=True)
