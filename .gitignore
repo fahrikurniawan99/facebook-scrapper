@@ -1,0 +1,37 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Facebook Session State & Auth Credentials (JANGAN PERNAH COMMIT!)
+state.json
+fb_auth.json
+*.session
+.env
+.env.*
+
+# Output data & crawled files
+output/
+*.xlsx
+*.csv
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Logs
+*.log
+
+# Playwright artifacts
+test-results/
+playwright-report/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
