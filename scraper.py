@@ -275,10 +275,16 @@ def scrape_group(url: str, max_scrolls: int, base_delay: float = 2.5, headless: 
 
         print(f"\n[1/3] Membuka URL grup...")
         page.goto(url, wait_until="domcontentloaded")
-        page.wait_for_timeout(4000)
+        page.wait_for_timeout(5000)
 
-        if "login" in page.url.lower():
-            print("[Error] Sesi Anda telah kedaluwarsa atau belum valid.")
+        current_url = page.url
+        print(f"[Debug] URL yang terbuka: {current_url}")
+
+        if "login" in current_url.lower() or "checkpoint" in current_url.lower():
+            os.makedirs("output", exist_ok=True)
+            page.screenshot(path="output/debug_login.png")
+            print(f"[Error] Sesi Anda belum aktif atau dialihkan ke: {current_url}")
+            print("Screenshot disimpan ke 'output/debug_login.png'")
             print("Jalankan 'python login.py' atau 'python import_cookie.py' ulang.")
             browser.close()
             return []
